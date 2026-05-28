@@ -22,8 +22,7 @@ COPY crates ./crates
 COPY metrics ./metrics
 COPY cmd ./cmd
 COPY test ./test
-COPY tooling ./tooling
-COPY Cargo.* .
+COPY Cargo.* ./
 COPY .cargo/ ./.cargo
 
 RUN cargo chef prepare --recipe-path recipe.json
@@ -42,7 +41,10 @@ ARG PROFILE="release"
 ARG BUILD_FLAGS=""
 
 COPY --from=planner /ethrex/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json $BUILD_FLAGS
+COPY Cargo.* ./
+COPY .cargo/ ./.cargo
+RUN cargo chef cook --release --recipe-path recipe.json $BUILD_FLAGS || \
+    echo "WARNING: cargo-chef cook failed (expected for git-patched deps); continuing with full build"
 
 RUN  if [ "$(uname -m)" = aarch64 ]; \
     then \
@@ -57,7 +59,6 @@ COPY benches ./benches
 COPY crates ./crates
 COPY cmd ./cmd
 COPY metrics ./metrics
-COPY tooling ./tooling
 COPY fixtures/genesis ./fixtures/genesis
 COPY .git ./.git
 COPY Cargo.* ./
